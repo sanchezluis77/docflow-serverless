@@ -1,64 +1,117 @@
-import { useState } from 'react'
-import axios from 'axios'
-import FileUpload from './FileUpload' // <--- Importar
-import FileList from './FileList'     // <--- Importar
+import { useState } from 'react';
+import axios from 'axios';
+import { LogOut, FileText, User } from 'lucide-react'; // Iconos
+import FileUpload from './FileUpload';
+import FileList from './FileList';
 
 function App() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [token, setToken] = useState(null)
-  const [refreshList, setRefreshList] = useState(false) // Trigger para refrescar lista
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [token, setToken] = useState(null);
+  const [refreshList, setRefreshList] = useState(false);
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    const formData = new FormData()
-    formData.append('username', email)
-    formData.append('password', password)
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('username', email);
+    formData.append('password', password);
 
     try {
-      const response = await axios.post('http://localhost:8000/login', formData)
-      setToken(response.data.access_token)
+      const response = await axios.post('http://localhost:8000/login', formData);
+      setToken(response.data.access_token);
     } catch (err) {
-      alert('Credenciales incorrectas')
+      alert('Credenciales incorrectas');
     }
-  }
+  };
 
-  // Función para forzar la recarga de la lista cuando se sube un archivo
-  const triggerRefresh = () => {
-    setRefreshList(prev => !prev)
-  }
+  const triggerRefresh = () => setRefreshList(prev => !prev);
 
   return (
-    <div style={{ maxWidth: '800px', margin: '50px auto', fontFamily: 'Arial' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
-        <h1 style={{ margin: 0, color: '#333' }}>🚀 DocFlow Serverless</h1>
-        {token && (
-          <button onClick={() => setToken(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>
-            Cerrar Sesión
-          </button>
+    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
+      {/* Navbar */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900 tracking-tight">DocFlow</span>
+            </div>
+            {token && (
+              <button
+                onClick={() => setToken(null)}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Cerrar Sesión
+              </button>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {!token ? (
+          <div className="flex justify-center items-center h-[60vh]">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <div className="text-center mb-8">
+                <div className="bg-blue-100 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <User className="h-8 w-8 text-blue-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Bienvenido de nuevo</h2>
+                <p className="text-gray-500 mt-2">Ingresa tus credenciales para continuar</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="ejemplo@correo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                  <input
+                    type="password"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                >
+                  Iniciar Sesión
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Columna Izquierda: Subida */}
+            <div className="md:col-span-1">
+              <FileUpload token={token} onUploadSuccess={triggerRefresh} />
+            </div>
+            
+            {/* Columna Derecha: Lista */}
+            <div className="md:col-span-2">
+              <FileList token={token} refreshTrigger={refreshList} />
+            </div>
+          </div>
         )}
-      </header>
-      
-      {!token ? (
-        <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-          <h2>Iniciar Sesión</h2>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ padding: '10px' }}/>
-            <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ padding: '10px' }}/>
-            <button type="submit" style={{ padding: '10px', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}>Ingresar</button>
-          </form>
-        </div>
-      ) : (
-        <div>
-          {/* Componente de Subida */}
-          <FileUpload token={token} onUploadSuccess={triggerRefresh} />
-          
-          {/* Componente de Lista */}
-          <FileList token={token} refreshTrigger={refreshList} />
-        </div>
-      )}
+      </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
